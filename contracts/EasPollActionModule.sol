@@ -23,8 +23,7 @@ import {HubRestricted} from "lens-modules/contracts/base/HubRestricted.sol";
 import {IModuleRegistry} from "lens-modules/contracts/interfaces/IModuleRegistry.sol";
 import {LensModuleMetadata} from "lens-modules/contracts/modules/LensModuleMetadata.sol";
 import {FollowValidationLib} from "lens-modules/contracts/modules/libraries/FollowValidationLib.sol";
-
-import {LensModuleRegistrant} from "./base/LensModuleRegistrant.sol";
+import {LensModuleRegistrant} from "lens-modules/contracts/modules/base/LensModuleRegistrant.sol";
 
 /**
  * @title EasPollActionModule

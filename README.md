@@ -14,6 +14,18 @@ To use the live `EasPollActionModule` you can use the address and metadata below
 
 The `EasPollActionModule` contract can be used as an Open Action Module on Lens Protocol publications.
 
+Here's an example of a successful LensHub `Post` transaction with the `EasPollActionModule` attached:
+
+https://mumbai.polygonscan.com/tx/0xc20b03ff16c67a5e04d461b5535426137a6afc186fab3f33517d45bee8f18eeb
+
+and a successful `Act`:
+
+https://mumbai.polygonscan.com/tx/0x17519fee2af6cec2b5fe508646a135aecf6beac7bc4478cbca6e247e38718b02
+
+and here is the attestation from that action:
+
+https://polygon-mumbai.easscan.org/attestation/view/0x8787529ab2627b903970b971dfe52576ae7ef62570f42bfb9ff28a4a0ee395fc
+
 ### Create a Poll
 To create a poll, the initialize calldata ABI is:
 
@@ -71,7 +83,18 @@ To vote on a `signatureRequired` poll, the process calldata ABI is:
   ]
 ```
 
-Where `optionIndex` is the index of the option to vote for. 
+Here's the description of the `vote` tuple:
+
+| Parameter              | Description                                         | Type      |
+|------------------------|-----------------------------------------------------|-----------|
+| `publicationProfileId` | The profile id of the publication author            | `uint256` |
+| `publicationId`        | The publication id                                  | `uint256` |
+| `actorProfileId`       | The profile id of the voter                         | `uint256` |
+| `actorProfileOwner`    | The address of the voter                            | `address` |
+| `transactionExecutor`  | The address of the transaction executor             | `address` |
+| `optionIndex`          | The index of the option the voter selected (0 to 3) | `uint8`   |
+| `timestamp`            | The timestamp (in seconds) when the vote was cast   | `uint40`  |
+
 
 #### ⚠️ Note:
 The `signature` and `deadline` are only required when `signatureRequired` is `true` on the `Poll`.
