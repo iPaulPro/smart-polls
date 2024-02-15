@@ -1,6 +1,6 @@
 {
   "name": "eas-poll-action-module",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "An Open Action Module for Lens Protocol that transforms a publication into a poll, using Ethereum Attestation Service for voting.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,8 +10,9 @@
     "compile": "hardhat compile",
     "clean": "hardhat clean"
   },
-  "keywords": [],
+  "keywords": ["lens-protocol", "open-action-module", "eas", "ethereum-attestation-service"],
   "author": "Paul Burke <paul@paulburke.co>",
+  "repository": "https://github.com/iPaulPro/EasPollActionModule",
   "license": "MIT",
   "devDependencies": {
     "@ethereum-attestation-service/eas-contracts": "^1.3.7",
