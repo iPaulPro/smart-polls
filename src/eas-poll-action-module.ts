@@ -1,4 +1,10 @@
-import { encodeData, ModuleData, OpenActionModuleInput } from "@lens-protocol/client";
+import {
+  ActOnOpenActionRequest,
+  AnyPublicationFragment,
+  encodeData,
+  ModuleData,
+  OpenActionModuleInput,
+} from "@lens-protocol/client";
 import { Data } from "@lens-protocol/shared-kernel";
 import { encodeBytes32String, Signer } from "ethers";
 import { EAS, NO_EXPIRATION, SchemaEncoder, ZERO_BYTES32 } from "@ethereum-attestation-service/eas-sdk";
@@ -162,4 +168,27 @@ export const createSignedVoteAttestationData = async (signer: Signer, vote: EasV
       NO_EXPIRATION.toString(),
     ],
   );
+};
+
+export const createVoteActionRequest = async (
+  vote: EasVote,
+  publication: AnyPublicationFragment,
+  signer?: Signer,
+): Promise<ActOnOpenActionRequest> => {
+  let data: Data;
+  if (signer) {
+    data = await createSignedVoteAttestationData(signer, vote);
+  } else {
+    data = await createVoteAttestationData(vote);
+  }
+
+  return {
+    actOn: {
+      unknownOpenAction: {
+        address: EAS_POLL_ACTION_MODULE_ADDRESS,
+        data,
+      },
+    },
+    for: publication.id,
+  };
 };
