@@ -19,8 +19,16 @@ The `EasPollActionModule` contract can be used as an Open Action Module on Lens 
 
 [Attestation](https://polygon-mumbai.easscan.org/attestation/view/0x8787529ab2627b903970b971dfe52576ae7ef62570f42bfb9ff28a4a0ee395fc)
 
+### Install `eas-poll-action-module` Helper Library
+
+The helper library provides functions for creating the Lens SDK `OpenActionModuleInput` and `ActOnOpenActionRequest` which can be used to attach and act on the Open Action Module. To use the `eas-poll-action-module` helper library, you can install it using npm:
+
+```bash
+npm install eas-poll-action-module
+```
 
 ### Create a Poll
+
 To create a poll, the initialize calldata ABI is:
 
 | Name                | Description                                                                           | Type         |
@@ -30,77 +38,23 @@ To create a poll, the initialize calldata ABI is:
 | `endTimestamp`      | The timestamp (in seconds) when the poll ends or zero for open-ended                  | `uint40`     |
 | `signatureRequired` | Whether a signature is required for voting                                            | `bool`       |
 
-Here's an example of creating the encoded calldata with the Lens SDK:
+Here's an example of creating the encoded poll calldata with the Lens SDK:
 
 ```typescript
-import { encodeBytes32String } from "ethers";
-import { encodeData, type OpenActionModuleInput } from "@lens-protocol/client";
+import { type EasPoll, createPollActionModuleInput } from "eas-poll-action-module";
 
-const options = ["Option A", "Option B", "Option C", "Option D"];
-const timestamp = Math.floor(Date.now() / 1000) + 60 * 60 * 24; // 1 day
-const data = encodeData(
-  [
-    {
-      type: "tuple",
-      name: "poll",
-      components: [
-        { type: "bytes32[4]", name: "options" },
-        { type: "bool", name: "followersOnly" },
-        { type: "uint40", name: "endTimestamp" },
-        { type: "bool", name: "signatureRequired" },
-      ],
-    },
-  ],
-  [
-    options.map(encodeBytes32String), // options
-    false, // followersOnly
-    timestamp.toString(), // endTimestamp
-    true, // signatureRequired
-  ] as ModuleData,
-);
+const poll: EasPoll = {
+  options: ["Option A", "Option B", "Option C", "Option D"],
+  followersOnly: false,
+  endTimestamp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 1 day
+  signatureRequired: true,
+};
 
-const actions: OpenActionModuleInput[] = [
-    {
-      unknownOpenAction: {
-        address: '0xBd43F2Bc51020347619c2cC243E3B21859f4f64c',
-        data,
-      }
-    },
-];
+const pollAction: OpenActionModuleInput = createPollActionModuleInput(poll);
 ````
 ### Vote on a Poll
 
-To vote on a `signatureRequired` poll, the process calldata ABI is:
-
-```json
-[
-    {
-      "type": "tuple(uint256,uint256,uint256,address,uint8,uint40)",
-      "name": "vote",
-      "components": [
-        { "type": "uint256", "name": "publicationProfileId" },
-        { "type": "uint256", "name": "publicationId" },
-        { "type": "uint256", "name": "actorProfileId" },
-        { "type": "address", "name": "actorProfileOwner" },
-        { "type": "address", "name": "transactionExecutor" },
-        { "type": "uint8", "name": "optionIndex" },
-        { "type": "uint40", "name": "timestamp" }
-      ]
-    },
-    {
-      "type": "tuple(uint8,bytes32,bytes32)",
-      "name": "signature",
-      "components": [
-        { "type": "uint8", "name": "v" },
-        { "type": "bytes32", "name": "r" },
-        { "type": "bytes32", "name": "s" }
-      ]
-    },
-    { "type": "uint64", "name": "deadline" }
-  ]
-```
-
-Here's the description of the `vote` tuple:
+To vote on a poll, you create a `vote` tuple:
 
 | Parameter              | Description                                         | Type      |
 |------------------------|-----------------------------------------------------|-----------|
@@ -112,9 +66,26 @@ Here's the description of the `vote` tuple:
 | `optionIndex`          | The index of the option the voter selected (0 to 3) | `uint8`   |
 | `timestamp`            | The timestamp (in seconds) when the vote was cast   | `uint40`  |
 
+Here's how you can use the `eas-poll-action-module` helper library to create the `vote` "act on" request:
+
+```typescript
+import { type EasVote, createVoteActionRequest } from "eas-poll-action-module";
+
+const vote: EasVote = {
+  publicationProfileId: 1,
+  publicationId: 1,
+  actorProfileId: 2,
+  actorProfileOwner: "0x1234567890123456789012345678901234567890",
+  transactionExecutor: "0x1234567890123456789012345678901234567890",
+  optionIndex: 1,
+  timestamp: Math.floor(Date.now() / 1000),
+};
+
+const voteAction: ActOnOpenActionRequest = createVoteActionRequest(vote, post);
+```
 
 #### ⚠️ Note:
-The `signature` and `deadline` are only required when `signatureRequired` is `true` on the `Poll`.
+When `signatureRequired` is `true` on the `Poll` you must sign the `vote` using the `transactionExecutor` address. You can provide an `ethers.Signer` to the `createVoteActionRequest` function to sign the vote.
 
 ### Get Poll Results
 
