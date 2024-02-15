@@ -11,46 +11,63 @@ To use the live `EasPollActionModule` you can use the address and metadata below
 |---------|----------|---------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Mumbai  | 80001    | [0xBd43F2Bc51020347619c2cC243E3B21859f4f64c](https://mumbai.polygonscan.com/address/0xBd43F2Bc51020347619c2cC243E3B21859f4f64c) | [link](https://gateway.irys.xyz/-zJdOuwtPMPwVoFbSNO2d0dAg1lhUwHlCFOhrg8ZBVc) | [0x5e67b8b854d74789f6fa56f202907f85e3e53b87abe3d218c9f6dee1cc60ecbd](https://polygon-mumbai.easscan.org/schema/view/0x5e67b8b854d74789f6fa56f202907f85e3e53b87abe3d218c9f6dee1cc60ecbd) 
 
+The `EasPollActionModule` contract can be used as an Open Action Module on Lens Protocol publications. Here are examples of successful transactions on Mumbai using the poll module:
 
-The `EasPollActionModule` contract can be used as an Open Action Module on Lens Protocol publications.
+[`Post` transaction](https://mumbai.polygonscan.com/tx/0xc20b03ff16c67a5e04d461b5535426137a6afc186fab3f33517d45bee8f18eeb)
 
-Here's an example of a successful LensHub `Post` transaction with the `EasPollActionModule` attached:
+[`Act` transaction](https://mumbai.polygonscan.com/tx/0x17519fee2af6cec2b5fe508646a135aecf6beac7bc4478cbca6e247e38718b02)
 
-https://mumbai.polygonscan.com/tx/0xc20b03ff16c67a5e04d461b5535426137a6afc186fab3f33517d45bee8f18eeb
+[Attestation](https://polygon-mumbai.easscan.org/attestation/view/0x8787529ab2627b903970b971dfe52576ae7ef62570f42bfb9ff28a4a0ee395fc)
 
-and a successful `Act`:
-
-https://mumbai.polygonscan.com/tx/0x17519fee2af6cec2b5fe508646a135aecf6beac7bc4478cbca6e247e38718b02
-
-and here is the attestation from that action:
-
-https://polygon-mumbai.easscan.org/attestation/view/0x8787529ab2627b903970b971dfe52576ae7ef62570f42bfb9ff28a4a0ee395fc
 
 ### Create a Poll
 To create a poll, the initialize calldata ABI is:
 
-```json
-[
-  {
-    "type": "tuple(bytes32[4],bool,uint40,bool)",
-    "name": "poll",
-    "components": [
-      { "type": "bytes32[4]", "name": "options" },
-      { "type": "bool", "name": "followersOnly" },
-      { "type": "uint40", "name": "endTimestamp" },
-      { "type": "bool", "name": "signatureRequired" }
-    ]
-  }
-]
-```
-
-| Parameter           | Description                                                                           | Type         |
+| Name                | Description                                                                           | Type         |
 |---------------------|---------------------------------------------------------------------------------------|--------------|
 | `options`           | An array of 2 to 4 voting choice strings that have been encoded into `bytes32` format | `bytes32[4]` |
 | `followersOnly`     | Restrict voting to followers of the publication author                                | `bool`       |
 | `endTimestamp`      | The timestamp (in seconds) when the poll ends or zero for open-ended                  | `uint40`     |
 | `signatureRequired` | Whether a signature is required for voting                                            | `bool`       |
 
+Here's an example of creating the encoded calldata with the Lens SDK:
+
+```typescript
+import { encodeBytes32String } from "ethers";
+import { encodeData, type OpenActionModuleInput } from "@lens-protocol/client";
+
+const options = ["Option A", "Option B", "Option C", "Option D"];
+const timestamp = Math.floor(Date.now() / 1000) + 60 * 60 * 24; // 1 day
+const data = encodeData(
+  [
+    {
+      type: "tuple",
+      name: "poll",
+      components: [
+        { type: "bytes32[4]", name: "options" },
+        { type: "bool", name: "followersOnly" },
+        { type: "uint40", name: "endTimestamp" },
+        { type: "bool", name: "signatureRequired" },
+      ],
+    },
+  ],
+  [
+    options.map(encodeBytes32String), // options
+    false, // followersOnly
+    timestamp.toString(), // endTimestamp
+    true, // signatureRequired
+  ] as ModuleData,
+);
+
+const actions: OpenActionModuleInput[] = [
+    {
+      unknownOpenAction: {
+        address: '0xBd43F2Bc51020347619c2cC243E3B21859f4f64c',
+        data,
+      }
+    },
+];
+````
 ### Vote on a Poll
 
 To vote on a `signatureRequired` poll, the process calldata ABI is:
