@@ -1,10 +1,4 @@
-import {
-  ActOnOpenActionRequest,
-  AnyPublicationFragment,
-  encodeData,
-  ModuleData,
-  OpenActionModuleInput,
-} from "@lens-protocol/client";
+import { ActOnOpenActionRequest, encodeData, ModuleData, OpenActionModuleInput } from "@lens-protocol/client";
 import { Data } from "@lens-protocol/shared-kernel";
 import { encodeBytes32String, Signer } from "ethers";
 import { EAS, NO_EXPIRATION, SchemaEncoder, ZERO_BYTES32 } from "@ethereum-attestation-service/eas-sdk";
@@ -16,23 +10,78 @@ export const EAS_POLL_SCHEMA =
   "uint256 publicationProfileId,uint256 publicationId,uint256 actorProfileId,address actorProfileOwner,address transactionExecutor,uint8 optionIndex,uint40 timestamp";
 
 export type EasPoll = {
+  /**
+   * The options of the poll. Minimum 2, maximum 4. Each option max 32 bytes.
+   */
   options: string[];
+
+  /**
+   * Whether the poll can only be voted on by followers of the publication author.
+   */
   followersOnly: boolean;
+
+  /**
+   * The end timestamp of the poll (in seconds).
+   */
   endTimestamp: number;
+
+  /**
+   * Whether the poll requires a signature to vote.
+   */
   signatureRequired: boolean;
 };
 
 export type EasVote = {
+  /**
+   * The profile ID of the publication author.
+   */
   publicationProfileId: string;
+
+  /**
+   * The ID (index) of the publication.
+   */
   publicationId: string;
+
+  /**
+   * The profile ID of the voter.
+   */
   actorProfileId: string;
+
+  /**
+   * The address of the voter.
+   */
   actorProfileOwner: string;
+
+  /**
+   * The address of the transaction executor.
+   */
   transactionExecutor: string;
+
+  /**
+   * The index of the voted option.
+   */
   optionIndex: 0 | 1 | 2 | 3;
+
+  /**
+   * The timestamp of the vote (in seconds).
+   */
   timestamp: number;
 };
 
+/**
+ * Creates an OpenActionModuleInput for initializing a poll on the EAS Poll Action Module.
+ *
+ * @param poll The poll to create.
+ */
 export const createPollActionModuleInput = (poll: EasPoll): OpenActionModuleInput => {
+  if (poll.options.length < 2 || poll.options.length > 4) {
+    throw new Error("There must be between 2 and 4 poll options");
+  }
+
+  if (poll.endTimestamp < Math.floor(Date.now() / 1000)) {
+    throw new Error("Poll end timestamp must be in the future");
+  }
+
   const data = encodeData(
     [
       {
@@ -59,7 +108,37 @@ export const createPollActionModuleInput = (poll: EasPoll): OpenActionModuleInpu
   } satisfies OpenActionModuleInput;
 };
 
-export const createVoteAttestationData = async (vote: EasVote): Promise<Data> =>
+/**
+ * Creates an ActOnOpenActionRequest for voting on a poll on the EAS Poll Action Module.
+ *
+ * @param vote The vote to create.
+ * @param pubId The publication ID of the poll.
+ * @param signer The signer to use for creating a signed vote attestation. If not provided, an unsigned vote attestation will be created.
+ */
+export const createVoteActionRequest = async (
+  vote: EasVote,
+  pubId: string,
+  signer?: Signer,
+): Promise<ActOnOpenActionRequest> => {
+  let data: Data;
+  if (signer) {
+    data = await encodeSignedVoteAttestationData(signer, vote);
+  } else {
+    data = await encodeVoteAttestationData(vote);
+  }
+
+  return {
+    actOn: {
+      unknownOpenAction: {
+        address: EAS_POLL_ACTION_MODULE_ADDRESS,
+        data,
+      },
+    },
+    for: pubId,
+  };
+};
+
+const encodeVoteAttestationData = async (vote: EasVote): Promise<Data> =>
   encodeData(
     [
       {
@@ -89,7 +168,7 @@ export const createVoteAttestationData = async (vote: EasVote): Promise<Data> =>
     ],
   );
 
-export const createSignedVoteAttestationData = async (signer: Signer, vote: EasVote): Promise<Data> => {
+const encodeSignedVoteAttestationData = async (signer: Signer, vote: EasVote): Promise<Data> => {
   const schemaEncoder = new SchemaEncoder(EAS_POLL_SCHEMA);
   const encodedData = schemaEncoder.encodeData([
     { name: "publicationProfileId", value: vote.publicationProfileId, type: "uint256" },
@@ -165,27 +244,4 @@ export const createSignedVoteAttestationData = async (signer: Signer, vote: EasV
       NO_EXPIRATION.toString(),
     ],
   );
-};
-
-export const createVoteActionRequest = async (
-  vote: EasVote,
-  publication: AnyPublicationFragment,
-  signer?: Signer,
-): Promise<ActOnOpenActionRequest> => {
-  let data: Data;
-  if (signer) {
-    data = await createSignedVoteAttestationData(signer, vote);
-  } else {
-    data = await createVoteAttestationData(vote);
-  }
-
-  return {
-    actOn: {
-      unknownOpenAction: {
-        address: EAS_POLL_ACTION_MODULE_ADDRESS,
-        data,
-      },
-    },
-    for: publication.id,
-  };
 };
