@@ -47,10 +47,7 @@ export const createPollActionModuleInput = (poll: EasPoll): OpenActionModuleInpu
       },
     ],
     [
-      poll.options.map(encodeBytes32String),
-      poll.followersOnly,
-      poll.endTimestamp.toString(),
-      poll.signatureRequired,
+      [poll.options.map(encodeBytes32String), poll.followersOnly, poll.endTimestamp.toString(), poll.signatureRequired],
     ] as ModuleData,
   );
 
