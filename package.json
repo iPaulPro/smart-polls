@@ -8,7 +8,8 @@
     "build": "tsc",
     "prepublish": "tsc",
     "compile": "hardhat compile",
-    "clean": "hardhat clean"
+    "clean": "hardhat clean",
+    "lint": "eslint . --ext .ts"
   },
   "keywords": [
     "lens-protocol",
@@ -25,6 +26,9 @@
     "@lens-protocol/client": "^2.0.0-alpha.30",
     "@openzeppelin/contracts": "^4.8.1",
     "@types/node": "^20.11.19",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
+    "eslint": "^8.56.0",
     "ethers": "^6.11.1",
     "hardhat": "^2.19.5",
     "lens-modules": "^1.0.2",

@@ -64,7 +64,7 @@ export const createPollActionModuleInput = (poll: EasPoll): OpenActionModuleInpu
  * Creates an ActOnOpenActionRequest for voting on a poll on the EAS Poll Action Module.
  *
  * @param vote The vote to create.
- * @param signer The signer to use for creating a signed vote attestation. If not provided, an unsigned vote attestation will be created.
+ * @param signer Optional signer to use for creating a signed vote attestation. If not provided, an unsigned vote attestation will be created.
  */
 export const createVoteActionRequest = async (vote: EasVote, signer?: Signer): Promise<ActOnOpenActionRequest> => {
   let data: Data;
