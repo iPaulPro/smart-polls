@@ -45,9 +45,9 @@ import { type EasPoll, createPollActionModuleInput } from "eas-poll-action-modul
 
 const poll: EasPoll = {
   options: ["Option A", "Option B", "Option C", "Option D"],
-  followersOnly: false,
-  endTimestamp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 1 day
-  signatureRequired: true,
+  followersOnly: true, // Optional
+  endTimestamp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // Optional
+  signatureRequired: false, // Optional
 };
 
 const pollAction: OpenActionModuleInput = createPollActionModuleInput(poll);
@@ -72,16 +72,13 @@ Here's how you can use the `eas-poll-action-module` helper library to create the
 import { type EasVote, createVoteActionRequest } from "eas-poll-action-module";
 
 const vote: EasVote = {
-  publicationProfileId: 1,
-  publicationId: 1,
-  actorProfileId: 2,
+  publicationId: "0xd8-0x01",
+  actorProfileId: "0x01",
   actorProfileOwner: "0x1234567890123456789012345678901234567890",
-  transactionExecutor: "0x1234567890123456789012345678901234567890",
   optionIndex: 1,
-  timestamp: Math.floor(Date.now() / 1000),
 };
 
-const voteAction: ActOnOpenActionRequest = createVoteActionRequest(vote, post);
+const voteAction: ActOnOpenActionRequest = createVoteActionRequest(vote, post.id);
 ```
 
 #### ⚠️ Note:
