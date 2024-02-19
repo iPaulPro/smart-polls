@@ -125,8 +125,8 @@ const encodeSignedVoteAttestationData = async (signer: Signer, vote: EasVote): P
   const publicationProfileId = parseInt(vote.publicationId.split("-")[0], 16);
   const publicationId = parseInt(vote.publicationId.split("-")[1], 16);
   const actorProfileId = parseInt(vote.actorProfileId, 16);
-  const transactionExecutor = vote.transactionExecutor ?? vote.actorProfileOwner;
-  const timestamp = vote.timestamp ?? Math.floor(Date.now() / 1000);
+  const transactionExecutor = await signer.getAddress();
+  const timestamp = Math.floor(Date.now() / 1000);
 
   const schemaEncoder = new SchemaEncoder(EAS_POLL_SCHEMA);
   const encodedData = schemaEncoder.encodeData([
