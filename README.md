@@ -1,7 +1,17 @@
 # EasPollActionModule
 
-`EasPollActionModule.sol` is an Open Action Module (Publication Module) for Lens Protocol. It allows users to create and vote on polls using the Ethereum Attestation Service (EAS).
+`EasPollActionModule.sol` is an Open Action Module (Publication Module) for Lens Protocol. It allows users to create and vote on polls using the Ethereum Attestation Service (EAS), 100% on-chain.
 
+
+## Benefits over using Snapshot
+
+The `EasPollActionModule` contract provides a number of benefits over using Snapshot for polls:
+
+1. **100% on-chain**: The poll and votes are stored on-chain, providing a high level of trust and transparency.
+2. **Protocol-wide**: Unlike Snapshot, the `EasPollActionModule` can be used on any Lens Protocol publication, and polls can be voted on from any Lens app. No DAO hack necessary!
+3. **EAS Integration**: Ethereum Attestation Service (EAS) allows for easy and permissionless querying of polls and votes using their GraphQL API or your own subgraph.
+4. **Token gating**: Easily restrict voting to followers of the publication author.
+5. **Require Signature**: Optionally require a signature for voting, creating a delegated attestation.
 
 ## Using the EasPollActionModule Contract
 

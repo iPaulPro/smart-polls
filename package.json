@@ -1,7 +1,7 @@
 {
   "name": "eas-poll-action-module",
   "version": "1.0.6",
-  "description": "An Open Action Module for Lens Protocol that transforms a publication into a poll, using Ethereum Attestation Service for voting.",
+  "description": "An Open Action Module for Lens Protocol that transforms a publication into a poll, using Ethereum Attestation Service for on-chain voting.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
