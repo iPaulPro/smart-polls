@@ -9,7 +9,7 @@ To use the live `EasPollActionModule` you can use the address and metadata below
 
 | Network | Chain ID | Deployed Contract                                                                                                               | Metadata                                                                     | EAS Schema UID                                                                                                                                                                          |
 |---------|----------|---------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Mumbai  | 80001    | [0xBd43F2Bc51020347619c2cC243E3B21859f4f64c](https://mumbai.polygonscan.com/address/0xBd43F2Bc51020347619c2cC243E3B21859f4f64c) | [link](https://gateway.irys.xyz/-zJdOuwtPMPwVoFbSNO2d0dAg1lhUwHlCFOhrg8ZBVc) | [0x5e67b8b854d74789f6fa56f202907f85e3e53b87abe3d218c9f6dee1cc60ecbd](https://polygon-mumbai.easscan.org/schema/view/0x5e67b8b854d74789f6fa56f202907f85e3e53b87abe3d218c9f6dee1cc60ecbd) 
+| Mumbai  | 80001    | [0xBd43F2Bc51020347619c2cC243E3B21859f4f64c](https://mumbai.polygonscan.com/address/0xBd43F2Bc51020347619c2cC243E3B21859f4f64c) | [link](https://gateway.irys.xyz/-zJdOuwtPMPwVoFbSNO2d0dAg1lhUwHlCFOhrg8ZBVc) | [0x5e67b8b854d74789f6fa56f202907f85e3e53b87abe3d218c9f6dee1cc60ecbd](https://polygon-mumbai.easscan.org/schema/view/0x5e67b8b854d74789f6fa56f202907f85e3e53b87abe3d218c9f6dee1cc60ecbd) |
 
 The `EasPollActionModule` contract can be used as an Open Action Module on Lens Protocol publications. Here are examples of successful transactions on Mumbai using the poll module:
 
@@ -38,9 +38,10 @@ To create a poll, the initialize calldata ABI is:
 | `endTimestamp`      | The timestamp (in seconds) when the poll ends or zero for open-ended                  | `uint40`     |
 | `signatureRequired` | Whether a signature is required for voting                                            | `bool`       |
 
-Here's an example of creating the encoded poll calldata with the Lens SDK:
+Here's an example of creating the poll action with the `eas-poll-action-module` helper library:
 
 ```typescript
+import { OpenActionModuleInput, OnchainPostRequest } from "@lens-protocol/client";
 import { type EasPoll, createPollActionModuleInput } from "eas-poll-action-module";
 
 const poll: EasPoll = {
@@ -51,6 +52,10 @@ const poll: EasPoll = {
 };
 
 const pollAction: OpenActionModuleInput = createPollActionModuleInput(poll);
+
+const postRequest: OnchainPostRequest = { contentURI };
+postRequest.openActionModules= [{ unknownOpenAction: pollAction }];
+await lensClient.publication.postOnchain(postRequest);
 ````
 ### Vote on a Poll
 
@@ -66,19 +71,23 @@ To vote on a poll, you create a `vote` tuple:
 | `optionIndex`          | The index of the option the voter selected (0 to 3) | `uint8`   |
 | `timestamp`            | The timestamp (in seconds) when the vote was cast   | `uint40`  |
 
-Here's how you can use the `eas-poll-action-module` helper library to create the `vote` "act on" request:
+Here's how you can use the `eas-poll-action-module` helper library to create the `vote` "act on" request to be used with the Lens SDK:
 
 ```typescript
+import { ActOnOpenActionRequest } from "@lens-protocol/client";
 import { type EasVote, createVoteActionRequest } from "eas-poll-action-module";
 
+const publicationId = "0xd8-0x01";
 const vote: EasVote = {
-  publicationId: "0xd8-0x01",
+  publicationId: publicationId,
   actorProfileId: "0x01",
   actorProfileOwner: "0x1234567890123456789012345678901234567890",
   optionIndex: 1,
 };
 
 const voteAction: ActOnOpenActionRequest = createVoteActionRequest(vote, post.id);
+
+await lensClient.publication.actions.actOn(voteAction);
 ```
 
 #### ⚠️ Note:

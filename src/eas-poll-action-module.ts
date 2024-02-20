@@ -6,7 +6,6 @@ import { EAS, NO_EXPIRATION, SchemaEncoder, ZERO_BYTES32 } from "@ethereum-attes
 import {
   EasPoll,
   EasVote,
-  GetVoteCountResponse,
   GetVoteCountQueryVariables,
   GetVoteCountForOptionIndexVariables,
   PollOption,
@@ -99,7 +98,7 @@ export const createVoteActionRequest = async (vote: EasVote, signer?: Signer): P
 /**
  * Creates graphql query variables for getting the vote count of a poll on the EAS Poll Action Module.
  *
- * @param publicationId The full ID of the publication as a hex string (eg. 0xd8-0x01).
+ * @param publicationId The full ID of the publication as a hex string (e.g. 0xd8-0x01).
  * @param testnet Whether to use the testnet schema.
  */
 export const createVoteCountQueryVariables = (
@@ -116,7 +115,7 @@ export const createVoteCountQueryVariables = (
 /**
  * Creates graphql query variables for getting the vote count of a specific poll option on the EAS Poll Action Module.
  *
- * @param publicationId The full ID of the publication as a hex string (eg. 0xd8-0x01).
+ * @param publicationId The full ID of the publication as a hex string (e.g. 0xd8-0x01).
  * @param optionIndex The index of the option to get the vote count for.
  * @param testnet Whether to use the testnet schema.
  */
