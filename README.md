@@ -87,15 +87,14 @@ Here's how you can use the `eas-poll-action-module` helper library to create the
 import { ActOnOpenActionRequest } from "@lens-protocol/client";
 import { type EasVote, createVoteActionRequest } from "eas-poll-action-module";
 
-const publicationId = "0xd8-0x01";
 const vote: EasVote = {
-  publicationId: publicationId,
+  publicationId: "0xd8-0x01",
   actorProfileId: "0x01",
   actorProfileOwner: "0x1234567890123456789012345678901234567890",
   optionIndex: 1,
 };
 
-const voteAction: ActOnOpenActionRequest = createVoteActionRequest(vote, post.id);
+const voteAction: ActOnOpenActionRequest = createVoteActionRequest(vote);
 
 await lensClient.publication.actions.actOn(voteAction);
 ```
