@@ -3,14 +3,25 @@ import { Data } from "@lens-protocol/shared-kernel";
 import { encodeBytes32String, Signer } from "ethers";
 import { EAS, NO_EXPIRATION, SchemaEncoder, ZERO_BYTES32 } from "@ethereum-attestation-service/eas-sdk";
 
-import { EasPoll, EasVote } from "./lib/types";
+import {
+  EasPoll,
+  EasVote,
+  GetVoteCountResponse,
+  GetVoteCountQueryVariables,
+  GetVoteCountForOptionIndexVariables,
+  PollOption,
+} from "./lib/types";
 import {
   EAS_ADDRESS,
   EAS_ADDRESS_TESTNET,
+  EAS_GRAPHQL_ENDPOINT,
+  EAS_GRAPHQL_ENDPOINT_TESTNET,
   EAS_POLL_ACTION_MODULE_ADDRESS,
   EAS_POLL_SCHEMA,
   EAS_POLL_SCHEMA_UID,
   EAS_POLL_SCHEMA_UID_TESTNET,
+  GET_VOTE_COUNT_FOR_OPTION_QUERY,
+  GET_VOTE_COUNT_QUERY,
 } from "./lib/constants";
 
 const POLYGON_MAINNET_CHAIN_ID = 137;
@@ -85,6 +96,110 @@ export const createVoteActionRequest = async (vote: EasVote, signer?: Signer): P
   };
 };
 
+/**
+ * Creates graphql query variables for getting the vote count of a poll on the EAS Poll Action Module.
+ *
+ * @param publicationId The full ID of the publication as a hex string (eg. 0xd8-0x01).
+ * @param testnet Whether to use the testnet schema.
+ */
+export const createVoteCountQueryVariables = (
+  publicationId: string,
+  testnet: boolean = false,
+): GetVoteCountQueryVariables => {
+  const pollId = buildPollId(publicationId);
+  return {
+    schemaId: testnet ? EAS_POLL_SCHEMA_UID_TESTNET : EAS_POLL_SCHEMA_UID,
+    pollId,
+  } satisfies GetVoteCountQueryVariables;
+};
+
+/**
+ * Creates graphql query variables for getting the vote count of a specific poll option on the EAS Poll Action Module.
+ *
+ * @param publicationId The full ID of the publication as a hex string (eg. 0xd8-0x01).
+ * @param optionIndex The index of the option to get the vote count for.
+ * @param testnet Whether to use the testnet schema.
+ */
+export const createVoteCountForOptionQueryVariables = (
+  publicationId: string,
+  optionIndex: PollOption,
+  testnet: boolean = false,
+): GetVoteCountForOptionIndexVariables => {
+  const pollId = buildPollId(publicationId);
+  const optionIndexAbi = `{"name":"optionIndex","type":"uint8","value":${optionIndex}}`;
+  return {
+    schemaId: testnet ? EAS_POLL_SCHEMA_UID_TESTNET : EAS_POLL_SCHEMA_UID,
+    pollId,
+    optionIndex: optionIndexAbi,
+  } satisfies GetVoteCountForOptionIndexVariables;
+};
+
+/**
+ * Gets the vote count of a poll on the EAS Poll Action Module.
+ *
+ * @param variables The graphql query variables.
+ * @param testnet Whether to use the testnet schema.
+ *
+ * @see createVoteCountQueryVariables
+ */
+export const getVoteCount = async (
+  variables: GetVoteCountQueryVariables,
+  testnet: boolean = false,
+): Promise<GetVoteCountResponse> => {
+  const response = await fetch(testnet ? EAS_GRAPHQL_ENDPOINT_TESTNET : EAS_GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: GET_VOTE_COUNT_QUERY,
+      variables,
+    }),
+  });
+
+  const { data } = await response.json();
+  return data;
+};
+
+/**
+ * Gets the vote count of a specific poll option on the EAS Poll Action Module.
+ *
+ * @param variables The graphql query variables.
+ * @param testnet Whether to use the testnet schema.
+ *
+ * @see createVoteCountForOptionQueryVariables
+ */
+export const getVoteCountForOption = async (
+  variables: GetVoteCountForOptionIndexVariables,
+  testnet: boolean = false,
+): Promise<GetVoteCountResponse> => {
+  const response = await fetch(testnet ? EAS_GRAPHQL_ENDPOINT_TESTNET : EAS_GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: GET_VOTE_COUNT_FOR_OPTION_QUERY,
+      variables,
+    }),
+  });
+
+  const { data } = await response.json();
+  return data;
+};
+
+const buildPollId = (publicationId: string): Data => {
+  const profileId = parseInt(publicationId.split("-")[0]).toString();
+  const pubId = parseInt(publicationId.split("-")[1]).toString();
+  return encodeData(
+    [
+      { name: "publicationProfileId", type: "uint256" },
+      { name: "publicationId", type: "uint256" },
+    ],
+    [profileId, pubId],
+  );
+};
+
 const encodeVoteAttestationData = async (vote: EasVote): Promise<Data> =>
   encodeData(
     [
@@ -122,9 +237,9 @@ const encodeSignedVoteAttestationData = async (signer: Signer, vote: EasVote): P
   }
   const isMainnet = network.matches(POLYGON_MAINNET_CHAIN_ID);
 
-  const publicationProfileId = parseInt(vote.publicationId.split("-")[0], 16);
-  const publicationId = parseInt(vote.publicationId.split("-")[1], 16);
-  const actorProfileId = parseInt(vote.actorProfileId, 16);
+  const publicationProfileId = parseInt(vote.publicationId.split("-")[0]);
+  const publicationId = parseInt(vote.publicationId.split("-")[1]);
+  const actorProfileId = parseInt(vote.actorProfileId);
   const transactionExecutor = await signer.getAddress();
   const timestamp = Math.floor(Date.now() / 1000);
 

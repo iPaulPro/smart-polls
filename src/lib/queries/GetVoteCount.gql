@@ -1,0 +1,16 @@
+query GetVoteCount($schemaId: String!, $pollId: String!) {
+    groupByAttestation(
+        where: {
+            schemaId: { equals: $schemaId },
+            data: { startsWith: $pollId }
+            revoked: { equals: false },
+        }
+        by: [schemaId]
+        orderBy: [ { _count: { schemaId: asc } } ]
+    ) {
+        schemaId
+        _count {
+            _all
+        }
+    }
+}

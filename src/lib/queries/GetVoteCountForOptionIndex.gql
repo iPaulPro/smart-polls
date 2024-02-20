@@ -1,0 +1,19 @@
+query GetVoteCountForOptionIndex(
+    $schemaId: String!,
+    $pollId: String!,
+    $optionIndex: String!
+) {
+    groupByAttestation(
+        where: {
+            schemaId: { equals: $schemaId },
+            decodedDataJson: { contains: $optionIndex },
+            data: { startsWith: $pollId },
+            revoked: { equals: false }
+        }
+        by: [schemaId]
+    ) {
+        _count {
+            _all
+        }
+    }
+}

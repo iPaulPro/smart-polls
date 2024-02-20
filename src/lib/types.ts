@@ -1,3 +1,5 @@
+export type PollOption = 0 | 1 | 2 | 3;
+
 export type EasPoll = {
   /**
    * The options of the poll. Minimum 2, maximum 4. Each option max 32 bytes.
@@ -39,7 +41,7 @@ export type EasVote = {
   /**
    * The index of the voted option.
    */
-  optionIndex: 0 | 1 | 2 | 3;
+  optionIndex: PollOption;
 
   /**
    * The address of the transaction executor.
@@ -51,3 +53,20 @@ export type EasVote = {
    */
   timestamp?: number;
 };
+
+export type GetVoteCountQueryVariables = {
+  schemaId: string;
+  pollId: string;
+};
+
+export interface GetVoteCountForOptionIndexVariables extends GetVoteCountQueryVariables {
+  optionIndex: string;
+}
+
+export interface GetVoteCountResponse {
+  groupByAttestation: {
+    _count: {
+      _all: number;
+    };
+  }[];
+}
