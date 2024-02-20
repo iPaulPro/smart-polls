@@ -145,7 +145,7 @@ export const createVoteCountForOptionQueryVariables = (
 export const getVoteCount = async (
   variables: GetVoteCountQueryVariables,
   testnet: boolean = false,
-): Promise<GetVoteCountResponse> => {
+): Promise<number> => {
   const response = await fetch(testnet ? EAS_GRAPHQL_ENDPOINT_TESTNET : EAS_GRAPHQL_ENDPOINT, {
     method: "POST",
     headers: {
@@ -158,7 +158,7 @@ export const getVoteCount = async (
   });
 
   const { data } = await response.json();
-  return data;
+  return data.groupByAttestation[0]._count._all;
 };
 
 /**
@@ -172,7 +172,7 @@ export const getVoteCount = async (
 export const getVoteCountForOption = async (
   variables: GetVoteCountForOptionIndexVariables,
   testnet: boolean = false,
-): Promise<GetVoteCountResponse> => {
+): Promise<number> => {
   const response = await fetch(testnet ? EAS_GRAPHQL_ENDPOINT_TESTNET : EAS_GRAPHQL_ENDPOINT, {
     method: "POST",
     headers: {
@@ -185,7 +185,7 @@ export const getVoteCountForOption = async (
   });
 
   const { data } = await response.json();
-  return data;
+  return data.groupByAttestation[0]._count._all;
 };
 
 const buildPollId = (publicationId: string): Data => {

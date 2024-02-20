@@ -84,9 +84,32 @@ const voteAction: ActOnOpenActionRequest = createVoteActionRequest(vote, post.id
 #### ⚠️ Note:
 When `signatureRequired` is `true` on the `Poll` you must sign the `vote` using the `transactionExecutor` address. You can provide an `ethers.Signer` to the `createVoteActionRequest` function to sign the vote.
 
+### EAS GraphQL API
+
+The `scemaUid` can also be used to query the EAS GraphQL API for votes. The `eas-poll-action-module` helper library provides functions for encoding the `pollId` and `optionIndex` to be used in the GraphQL query.
+
+Here's how you can get an attestation (vote) count from EAS:
+
+```typescript
+import { createVoteCountQueryVariables, getVoteCount } from "eas-poll-action-module";
+
+const variables = createVoteCountQueryVariables(publicationId);
+const count = await getVoteCount(variables);
+```
+
+Here's how you can get an attestation (vote) count for a specific option from EAS.
+
+```typescript
+import { createVoteCountForOptionQueryVariables, getVoteCountForOption } from "eas-poll-action-module";
+
+const optionIndex = 1;
+const variables = createVoteCountForOptionQueryVariables(publicationId, optionIndex);
+const count = await getVoteCountForOption(variables);
+```
+
 ### Get Poll Results
 
-The contract provides many ways to get poll results.
+The contract also provides many ways to get poll results.
 
 ```solidity
 /**
@@ -138,74 +161,4 @@ function getVoteByIndex(
     uint256 pubId,
     uint256 index
 ) external view returns (Vote memory);
-```
-
-### EAS GraphQL API
-
-The `scemaUid` can also be used to query the EAS GraphQL API for votes.
-
-Here's how you can get an attestation (vote) count from EAS:
-
-```typescript
-import { encodeData } from '@lens-protocol/client';
-
-// Construct the pollId string to filter by calldata
-const pollId = encodeData(
-  [{ name: "publicationProfileId", type: "publicationId" }],
-  [ profileId, pubId ],
-);
-```
-
-```graphql
-query GetVoteCount($schemaId: String!, $pollId: String!) {
-    groupByAttestation(
-        where: {
-            schemaId: { equals: $schemaId },
-            data: { startsWith: $pollId }
-            revoked: { equals: false },
-        }
-        by: [schemaId]
-        orderBy: [ { _count: { schemaId: asc } } ]
-    ) {
-        schemaId
-        _count {
-            _all
-        }
-    }
-}
-```
-
-Here's how you can get an attestation (vote) count for a specific option from EAS.
-
-```typescript
-import { encodeData } from '@lens-protocol/client';
-
-const voteIndex = 1; // The option the user selected
-
-// Construct the JSON string with the optionIndex value to filter by decodedDataJson
-const optionIndex = `{"name":"optionIndex","type":"uint8","value":${voteIndex}}`;
-```
-
-And the GraphQL query would look like this:
-
-```graphql
-query GetVoteCountForOptionIndex(
-    $schemaId: String!,
-    $pollId: String!,
-    $optionIndex: String!
-) {
-  groupByAttestation(
-    where: {
-        schemaId: { equals: $schemaId },
-        decodedDataJson: { contains: $optionIndex },
-        data: { startsWith: $pollId },
-        revoked: { equals: false }
-    }
-    by: [schemaId]
-  ) {
-    _count {
-      _all
-    }
-  }
-}
 ```
