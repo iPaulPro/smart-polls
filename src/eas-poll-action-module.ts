@@ -1,7 +1,7 @@
 import { ActOnOpenActionRequest, encodeData, ModuleData, OpenActionModuleInput } from "@lens-protocol/client";
 import { Data } from "@lens-protocol/shared-kernel";
 import { encodeBytes32String, Signer } from "ethers";
-import { EAS, NO_EXPIRATION, SchemaEncoder, ZERO_BYTES32 } from "@ethereum-attestation-service/eas-sdk";
+import { EAS, NO_EXPIRATION, SchemaEncoder, ZERO_ADDRESS, ZERO_BYTES32 } from "@ethereum-attestation-service/eas-sdk";
 
 import {
   EasPoll,
@@ -16,9 +16,9 @@ import {
   EAS_GRAPHQL_ENDPOINT,
   EAS_GRAPHQL_ENDPOINT_TESTNET,
   EAS_POLL_ACTION_MODULE_ADDRESS,
-  EAS_POLL_SCHEMA,
-  EAS_POLL_SCHEMA_UID,
-  EAS_POLL_SCHEMA_UID_TESTNET,
+  EAS_VOTE_SCHEMA,
+  EAS_VOTE_SCHEMA_UID,
+  EAS_VOTE_SCHEMA_UID_TESTNET,
   GET_VOTE_COUNT_FOR_OPTION_QUERY,
   GET_VOTE_COUNT_QUERY,
 } from "./lib/constants";
@@ -39,16 +39,28 @@ export const createPollActionModuleInput = (poll: EasPoll): OpenActionModuleInpu
     throw new Error("Poll end timestamp must be in the future");
   }
 
+  while (poll.options.length < 4) {
+    poll.options.push("");
+  }
+
   const data = encodeData(
     [
       {
-        type: "tuple(bytes32[4],bool,uint40,bool)",
+        type: "tuple",
         name: "poll",
         components: [
           { type: "bytes32[4]", name: "options" },
           { type: "bool", name: "followersOnly" },
           { type: "uint40", name: "endTimestamp" },
           { type: "bool", name: "signatureRequired" },
+          {
+            type: "tuple",
+            name: "gateParams",
+            components: [
+              { type: "address", name: "tokenAddress" },
+              { type: "uint256", name: "minThreshold" },
+            ],
+          },
         ],
       },
     ],
@@ -56,8 +68,9 @@ export const createPollActionModuleInput = (poll: EasPoll): OpenActionModuleInpu
       [
         poll.options.map(encodeBytes32String),
         poll.followersOnly ?? false,
-        poll.endTimestamp?.toString() ?? 0,
+        poll.endTimestamp ?? 0,
         poll.signatureRequired ?? false,
+        poll.gateParams ? [poll.gateParams.tokenAddress, poll.gateParams.minThreshold] : [ZERO_ADDRESS, 0],
       ],
     ] as ModuleData,
   );
@@ -107,7 +120,7 @@ export const createVoteCountQueryVariables = (
 ): GetVoteCountQueryVariables => {
   const pollId = buildPollId(publicationId);
   return {
-    schemaId: testnet ? EAS_POLL_SCHEMA_UID_TESTNET : EAS_POLL_SCHEMA_UID,
+    schemaId: testnet ? EAS_VOTE_SCHEMA_UID_TESTNET : EAS_VOTE_SCHEMA_UID,
     pollId,
   } satisfies GetVoteCountQueryVariables;
 };
@@ -127,7 +140,7 @@ export const createVoteCountForOptionQueryVariables = (
   const pollId = buildPollId(publicationId);
   const optionIndexAbi = `{"name":"optionIndex","type":"uint8","value":${optionIndex}}`;
   return {
-    schemaId: testnet ? EAS_POLL_SCHEMA_UID_TESTNET : EAS_POLL_SCHEMA_UID,
+    schemaId: testnet ? EAS_VOTE_SCHEMA_UID_TESTNET : EAS_VOTE_SCHEMA_UID,
     pollId,
     optionIndex: optionIndexAbi,
   } satisfies GetVoteCountForOptionIndexVariables;
@@ -199,11 +212,17 @@ const buildPollId = (publicationId: string): Data => {
   );
 };
 
-const encodeVoteAttestationData = async (vote: EasVote): Promise<Data> =>
-  encodeData(
+const encodeVoteAttestationData = async (vote: EasVote): Promise<Data> => {
+  const publicationProfileId = vote.publicationId ? parseInt(vote.publicationId.split("-")[0]) : 0;
+  const publicationId = vote.publicationId ? parseInt(vote.publicationId.split("-")[1]) : 0;
+  const actorProfileId = vote.actorProfileId ?? "0x00";
+  const actorProfileOwner = vote.actorProfileOwner ?? ZERO_ADDRESS;
+  const transactionExecutor = vote.transactionExecutor ?? vote.actorProfileOwner ?? ZERO_ADDRESS;
+  const timestamp = vote.timestamp ?? 0;
+  return encodeData(
     [
       {
-        type: "tuple(uint256,uint256,uint256,address,uint8,uint40)",
+        type: "tuple",
         components: [
           { type: "uint256", name: "publicationProfileId" },
           { type: "uint256", name: "publicationId" },
@@ -218,18 +237,23 @@ const encodeVoteAttestationData = async (vote: EasVote): Promise<Data> =>
     ],
     [
       [
-        parseInt(vote.publicationId.split("-")[0]).toString(),
-        parseInt(vote.publicationId.split("-")[1]).toString(),
-        vote.actorProfileId.toString(),
-        vote.actorProfileOwner,
-        vote.transactionExecutor ?? vote.actorProfileOwner,
+        publicationProfileId.toString(),
+        publicationId.toString(),
+        actorProfileId,
+        actorProfileOwner,
+        transactionExecutor,
         vote.optionIndex.toString(),
-        vote.timestamp?.toString() ?? Math.floor(Date.now() / 1000).toString(),
+        timestamp.toString(),
       ],
     ],
   );
+};
 
 const encodeSignedVoteAttestationData = async (signer: Signer, vote: EasVote): Promise<Data> => {
+  if (!vote.publicationId || !vote.actorProfileId || !vote.actorProfileOwner || !vote.transactionExecutor) {
+    throw new Error("Signed votes must have publicationId, actorProfileId, actorProfileOwner, and transactionExecutor");
+  }
+
   const network = await signer.provider?.getNetwork();
   if (!network) {
     throw new Error("Signer is not connected to a network");
@@ -242,7 +266,7 @@ const encodeSignedVoteAttestationData = async (signer: Signer, vote: EasVote): P
   const transactionExecutor = await signer.getAddress();
   const timestamp = Math.floor(Date.now() / 1000);
 
-  const schemaEncoder = new SchemaEncoder(EAS_POLL_SCHEMA);
+  const schemaEncoder = new SchemaEncoder(EAS_VOTE_SCHEMA);
   const encodedData = schemaEncoder.encodeData([
     { name: "publicationProfileId", value: publicationProfileId, type: "uint256" },
     { name: "publicationId", value: publicationId, type: "uint256" },
@@ -262,7 +286,7 @@ const encodeSignedVoteAttestationData = async (signer: Signer, vote: EasVote): P
   const delegated = await eas.getDelegated();
   const response = await delegated.signDelegatedAttestation(
     {
-      schema: isMainnet ? EAS_POLL_SCHEMA_UID : EAS_POLL_SCHEMA_UID_TESTNET,
+      schema: isMainnet ? EAS_VOTE_SCHEMA_UID : EAS_VOTE_SCHEMA_UID_TESTNET,
       data: encodedData,
       nonce: nonce,
       revocable: true,
@@ -280,7 +304,7 @@ const encodeSignedVoteAttestationData = async (signer: Signer, vote: EasVote): P
   return encodeData(
     [
       {
-        type: "tuple(uint256,uint256,uint256,address,uint8,uint40)",
+        type: "tuple",
         components: [
           { type: "uint256", name: "publicationProfileId" },
           { type: "uint256", name: "publicationId" },
@@ -293,7 +317,7 @@ const encodeSignedVoteAttestationData = async (signer: Signer, vote: EasVote): P
         name: "vote",
       },
       {
-        type: "tuple(uint8,bytes32,bytes32)",
+        type: "tuple",
         components: [
           { type: "uint8", name: "v" },
           { type: "bytes32", name: "r" },

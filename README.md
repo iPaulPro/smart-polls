@@ -1,7 +1,8 @@
-# EasPollActionModule
+# Smart Polls
 
-`EasPollActionModule.sol` is an Open Action Module (Publication Module) for Lens Protocol. It allows users to create and vote on polls using the Ethereum Attestation Service (EAS), 100% on-chain.
+Smart Polls transform Lens posts into polls using the Ethereum Attestation Service (EAS) for on-chain voting.
 
+`EasPollActionModule.sol` is an Open Action Module (Publication Module) for Lens Protocol that can be added to any publication to create a poll. The poll options and votes are stored on-chain and can be queried using the EAS GraphQL API or by running a subgraph.
 
 ## Benefits over using Snapshot
 
@@ -9,9 +10,9 @@ The `EasPollActionModule` contract provides a number of benefits over using Snap
 
 1. **100% on-chain**: The poll and votes are stored on-chain, providing a high level of trust and transparency.
 2. **Protocol-wide**: Unlike Snapshot, the `EasPollActionModule` can be used on any Lens Protocol publication, and polls can be voted on from any Lens app. No DAO hack necessary!
-3. **EAS Integration**: Ethereum Attestation Service (EAS) allows for easy and permissionless querying of polls and votes using their GraphQL API or your own subgraph.
-4. **Token gating**: Easily restrict voting to followers of the publication author.
-5. **Require Signature**: Optionally require a signature for voting, creating a delegated attestation.
+3. **EAS Integration**: Ethereum Attestation Service (EAS) allows for easy and permissionless querying of votes using their GraphQL API or your own subgraph.
+4. **Token gating**: Easily restrict voting to followers of the publication author or to any arbitrary ERC20/ERC721 token holders.
+5. **Require Signature**: Optionally require a signature for voting, creating a [delegated attestation](https://docs.attest.sh/docs/core--concepts/delegated-attestations).
 
 ## Using the EasPollActionModule Contract
 
@@ -19,7 +20,7 @@ To use the live `EasPollActionModule` you can use the address and metadata below
 
 | Network | Chain ID | Deployed Contract                                                                                                               | Metadata                                                                     | EAS Schema UID                                                                                                                                                                          |
 |---------|----------|---------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Mumbai  | 80001    | [0xBd43F2Bc51020347619c2cC243E3B21859f4f64c](https://mumbai.polygonscan.com/address/0xBd43F2Bc51020347619c2cC243E3B21859f4f64c) | [link](https://gateway.irys.xyz/-zJdOuwtPMPwVoFbSNO2d0dAg1lhUwHlCFOhrg8ZBVc) | [0x5e67b8b854d74789f6fa56f202907f85e3e53b87abe3d218c9f6dee1cc60ecbd](https://polygon-mumbai.easscan.org/schema/view/0x5e67b8b854d74789f6fa56f202907f85e3e53b87abe3d218c9f6dee1cc60ecbd) |
+| Mumbai  | 80001    | [0xBf587a3913484C43122Bbb4F4E80ca05D2017FAe](https://mumbai.polygonscan.com/address/0xBf587a3913484C43122Bbb4F4E80ca05D2017FAe) | [link](https://gateway.irys.xyz/xDsIajM0DkrxjBOGdndW1J7f7waGG1EmNtm1DCjW4x0) | [0x30c59a45f140c3b7885ad04871d8843ed0606db53cb36d7b31e0cc71ba3cf72d](https://polygon-mumbai.easscan.org/schema/view/0x30c59a45f140c3b7885ad04871d8843ed0606db53cb36d7b31e0cc71ba3cf72d) |
 
 The `EasPollActionModule` contract can be used as an Open Action Module on Lens Protocol publications. Here are examples of successful transactions on Mumbai using the poll module:
 
@@ -41,12 +42,13 @@ npm install eas-poll-action-module
 
 To create a poll, the initialize calldata ABI is:
 
-| Name                | Description                                                                           | Type         |
-|---------------------|---------------------------------------------------------------------------------------|--------------|
-| `options`           | An array of 2 to 4 voting choice strings that have been encoded into `bytes32` format | `bytes32[4]` |
-| `followersOnly`     | Restrict voting to followers of the publication author                                | `bool`       |
-| `endTimestamp`      | The timestamp (in seconds) when the poll ends or zero for open-ended                  | `uint40`     |
-| `signatureRequired` | Whether a signature is required for voting                                            | `bool`       |
+| Name                | Type                     | Description                                                                           | Required |
+|---------------------|:-------------------------|---------------------------------------------------------------------------------------|----------|
+| `options`           | `bytes32[4]`             | An array of 2 to 4 voting choice strings that have been encoded into `bytes32` format | true     |
+| `followersOnly`     | `bool`                   | Restrict voting to followers of the publication author                                | false    |
+| `endTimestamp`      | `uint40`                 | The timestamp (in seconds) when the poll ends or zero for open-ended                  | false    |
+| `signatureRequired` | `bool`                   | Whether a signature is required for voting                                            | false    |
+| `gateParams`        | `tuple(address,uint256)` | Token gating parameters                                                               | false    |
 
 Here's an example of creating the poll action with the `eas-poll-action-module` helper library:
 
@@ -59,6 +61,10 @@ const poll: EasPoll = {
   followersOnly: true, // Optional
   endTimestamp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // Optional
   signatureRequired: false, // Optional
+  gateParams: { // Optional
+    tokenAddress: "0x9B8cc6320F22325759B7D2CA5CD27347bB4eCD86",
+    minBalance: 1000000000000000000n,
+  }
 };
 
 const pollAction: OpenActionModuleInput = createPollActionModuleInput(poll);
@@ -104,7 +110,7 @@ When `signatureRequired` is `true` on the `Poll` you must sign the `vote` using 
 
 ### EAS GraphQL API
 
-The `scemaUid` can also be used to query the EAS GraphQL API for votes. The `eas-poll-action-module` helper library provides functions for encoding the `pollId` and `optionIndex` to be used in the GraphQL query.
+The `scemaUid` can also be used to query the [EAS GraphQL API](https://docs.attest.sh/docs/developer-tools/api) for votes. The `eas-poll-action-module` helper library provides functions for encoding the `pollId` and `optionIndex` to be used in the GraphQL query.
 
 Here's how you can get an attestation (vote) count from EAS:
 

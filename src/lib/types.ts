@@ -1,5 +1,17 @@
 export type PollOption = 0 | 1 | 2 | 3;
 
+export type GateParams = {
+  /**
+   * The address of ERC20/ERC721 token used for gating the action
+   */
+  tokenAddress: `0x${string}`;
+
+  /**
+   * The minimum balance threshold of the gated token required to execute an action
+   */
+  minThreshold: bigint;
+};
+
 export type EasPoll = {
   /**
    * The options of the poll. Minimum 2, maximum 4. Each option max 32 bytes.
@@ -20,6 +32,11 @@ export type EasPoll = {
    * Whether the poll requires a signature to vote.
    */
   signatureRequired?: boolean;
+
+  /**
+   * The token gating parameters of the poll.
+   */
+  gateParams?: GateParams;
 };
 
 export type EasVote = {
@@ -29,19 +46,19 @@ export type EasVote = {
   publicationId: string;
 
   /**
+   * The index of the voted option.
+   */
+  optionIndex: PollOption;
+
+  /**
    * The profile ID of the voter (as a hex string).
    */
-  actorProfileId: string;
+  actorProfileId?: string;
 
   /**
    * The address of the voter.
    */
-  actorProfileOwner: `0x${string}`;
-
-  /**
-   * The index of the voted option.
-   */
-  optionIndex: PollOption;
+  actorProfileOwner?: `0x${string}`;
 
   /**
    * The address of the transaction executor.
