@@ -1,7 +1,7 @@
 {
   "name": "SmartPolls",
-  "version": "1.0.6",
-  "description": "An Open Action Module for Lens Protocol that transforms a publication into a poll, using Ethereum Attestation Service for on-chain voting.",
+  "version": "1.0.7",
+  "description": "The contracts and helper library for implementing Smart Polls on Lens Protocol",
   "private": true,
   "workspaces": [
     "packages/*"

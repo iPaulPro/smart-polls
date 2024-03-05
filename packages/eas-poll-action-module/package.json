@@ -1,6 +1,6 @@
 {
   "name": "eas-poll-action-module",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A helper library for creating and voting on polls with the EasPollActionModule Open Action.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
