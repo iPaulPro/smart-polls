@@ -1,0 +1,31 @@
+{
+  "name": "eas-poll-action-module",
+  "version": "1.0.6",
+  "description": "A helper library for creating and voting on polls with the EasPollActionModule Open Action.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublish": "tsc",
+    "lint": "eslint . --ext .ts"
+  },
+  "keywords": [
+    "lens-protocol",
+    "open-action-module",
+    "eas",
+    "ethereum-attestation-service"
+  ],
+  "author": "Paul Burke <paul@paulburke.co>",
+  "repository": "https://github.com/iPaulPro/SmartPolls",
+  "license": "MIT",
+  "devDependencies": {
+    "@lens-protocol/client": "^2.0.0-alpha.30",
+    "@types/node": "^20.11.19",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
+    "eslint": "^8.56.0",
+    "ethers": "^6.11.1",
+    "prettier": "^3.2.5",
+    "typescript": "^5.3.3"
+  }
+}

@@ -4,6 +4,11 @@ Smart Polls transform Lens posts into polls using the Ethereum Attestation Servi
 
 `EasPollActionModule.sol` is an Open Action Module (Publication Module) for Lens Protocol that can be added to any publication to create a poll. The poll options and votes are stored on-chain and can be queried using the EAS GraphQL API or by running a subgraph.
 
+## Packages
+
+- `EasPollActionModule`: The Open Action module contract for creating and querying polls and votes. 
+- `eas-poll-action-module`: A helper library for interacting with `EasPollActionModule`, available for [installation](#install-eas-poll-action-module-helper-library) via npm.
+
 ## Benefits over using Snapshot
 
 The `EasPollActionModule` contract provides a number of benefits over using Snapshot for polls:
@@ -20,35 +25,48 @@ To use the live `EasPollActionModule` you can use the address and metadata below
 
 | Network | Chain ID | Deployed Contract                                                                                                               | Metadata                                                                     | EAS Schema UID                                                                                                                                                                          |
 |---------|----------|---------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Mumbai  | 80001    | [0xBf587a3913484C43122Bbb4F4E80ca05D2017FAe](https://mumbai.polygonscan.com/address/0xBf587a3913484C43122Bbb4F4E80ca05D2017FAe) | [link](https://gateway.irys.xyz/xDsIajM0DkrxjBOGdndW1J7f7waGG1EmNtm1DCjW4x0) | [0x30c59a45f140c3b7885ad04871d8843ed0606db53cb36d7b31e0cc71ba3cf72d](https://polygon-mumbai.easscan.org/schema/view/0x30c59a45f140c3b7885ad04871d8843ed0606db53cb36d7b31e0cc71ba3cf72d) |
+| Mumbai  | 80001    | [0xc91C3d3eD7089a9b52945c8967CF0854f08E9e7a](https://mumbai.polygonscan.com/address/0xc91C3d3eD7089a9b52945c8967CF0854f08E9e7a) | [link](https://gateway.irys.xyz/NTOWrzOZxJH_RJHEha1MC_m9s6-kAY7igCyhSDE6seU) | [0x44c235a2465c4d70bd980bdcf968d1997b237e2c7d30a2de1b59b98fee4a1f37](https://polygon-mumbai.easscan.org/schema/view/0x44c235a2465c4d70bd980bdcf968d1997b237e2c7d30a2de1b59b98fee4a1f37) |
 
 The `EasPollActionModule` contract can be used as an Open Action Module on Lens Protocol publications. Here are examples of successful transactions on Mumbai using the poll module:
 
-[`Post` transaction](https://mumbai.polygonscan.com/tx/0xc20b03ff16c67a5e04d461b5535426137a6afc186fab3f33517d45bee8f18eeb)
+[`Post (init)` transaction](https://mumbai.polygonscan.com/tx/0xc20b03ff16c67a5e04d461b5535426137a6afc186fab3f33517d45bee8f18eeb)
 
-[`Act` transaction](https://mumbai.polygonscan.com/tx/0x17519fee2af6cec2b5fe508646a135aecf6beac7bc4478cbca6e247e38718b02)
+[`Act (process)` transaction](https://mumbai.polygonscan.com/tx/0x17519fee2af6cec2b5fe508646a135aecf6beac7bc4478cbca6e247e38718b02)
 
-[Attestation](https://polygon-mumbai.easscan.org/attestation/view/0x8787529ab2627b903970b971dfe52576ae7ef62570f42bfb9ff28a4a0ee395fc)
+[Example Attestation](https://polygon-mumbai.easscan.org/attestation/view/0x8787529ab2627b903970b971dfe52576ae7ef62570f42bfb9ff28a4a0ee395fc)
 
 ### Install `eas-poll-action-module` Helper Library
 
-The helper library provides functions for creating the Lens SDK `OpenActionModuleInput` and `ActOnOpenActionRequest` which can be used to attach and act on the Open Action Module. To use the `eas-poll-action-module` helper library, you can install it using npm:
+The helper library provides functions for creating the Lens SDK `OpenActionModuleInput` and `ActOnOpenActionRequest` which can be used to attach and act on the Open Action Module. To use the `eas-poll-action-module` helper library, you can install it from npm:
 
 ```bash
-npm install eas-poll-action-module
+npm i -D eas-poll-action-module
+```
+```bash
+yarn add -D eas-poll-action-module
+```
+```bash
+pnpm add -D eas-poll-action-module
 ```
 
 ### Create a Poll
 
 To create a poll, the initialize calldata ABI is:
 
-| Name                | Type                     | Description                                                                           | Required |
-|---------------------|:-------------------------|---------------------------------------------------------------------------------------|----------|
-| `options`           | `bytes32[4]`             | An array of 2 to 4 voting choice strings that have been encoded into `bytes32` format | true     |
-| `followersOnly`     | `bool`                   | Restrict voting to followers of the publication author                                | false    |
-| `endTimestamp`      | `uint40`                 | The timestamp (in seconds) when the poll ends or zero for open-ended                  | false    |
-| `signatureRequired` | `bool`                   | Whether a signature is required for voting                                            | false    |
-| `gateParams`        | `tuple(address,uint256)` | Token gating parameters                                                               | false    |
+| Name                | Type         | Description                                                                           | Required |
+|---------------------|:-------------|---------------------------------------------------------------------------------------|----------|
+| `options`           | `bytes32[4]` | An array of 2 to 4 voting choice strings that have been encoded into `bytes32` format | true     |
+| `followersOnly`     | `bool`       | Restrict voting to followers of the publication author                                | false    |
+| `endTimestamp`      | `uint40`     | The timestamp (in seconds) when the poll ends or zero for open-ended                  | false    |
+| `signatureRequired` | `bool`       | Whether a signature is required for voting                                            | false    |
+| `gateParams`        | `tuple`      | Token gating parameters                                                               | false    |
+
+The optional `gateParams` tuple is used to restrict voting to holders of a specific ERC20 or ERC721 token:
+
+| Name           | Type      | Description                          | Required |
+|----------------|-----------|--------------------------------------|----------|
+| `tokenAddress` | `address` | The address of the token contract    | true     |
+| `minBalance`   | `uint256` | The minimum balance required to vote | true     |
 
 Here's an example of creating the poll action with the `eas-poll-action-module` helper library:
 
@@ -95,13 +113,10 @@ import { type EasVote, createVoteActionRequest } from "eas-poll-action-module";
 
 const vote: EasVote = {
   publicationId: "0xd8-0x01",
-  actorProfileId: "0x01",
-  actorProfileOwner: "0x1234567890123456789012345678901234567890",
   optionIndex: 1,
 };
 
 const voteAction: ActOnOpenActionRequest = createVoteActionRequest(vote);
-
 await lensClient.publication.actions.actOn(voteAction);
 ```
 

@@ -1,39 +1,19 @@
 {
-  "name": "eas-poll-action-module",
+  "name": "SmartPolls",
   "version": "1.0.6",
   "description": "An Open Action Module for Lens Protocol that transforms a publication into a poll, using Ethereum Attestation Service for on-chain voting.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "prepublish": "tsc",
-    "compile": "hardhat compile",
-    "clean": "hardhat clean",
-    "lint": "eslint . --ext .ts"
-  },
-  "keywords": [
-    "lens-protocol",
-    "open-action-module",
-    "eas",
-    "ethereum-attestation-service"
+  "private": true,
+  "workspaces": [
+    "packages/*"
   ],
+  "scripts": {
+    "build": "yarn workspace eas-poll-action-module build",
+    "prepublish": "yarn workspace eas-poll-action-module prepublish",
+    "lint": "yarn workspace eas-poll-action-module lint",
+    "compile": "yarn workspace EasPollActionModule compile",
+    "clean": "yarn workspace EasPollActionModule clean"
+  },
   "author": "Paul Burke <paul@paulburke.co>",
-  "repository": "https://github.com/iPaulPro/EasPollActionModule",
-  "license": "MIT",
-  "devDependencies": {
-    "@ethereum-attestation-service/eas-contracts": "^1.3.7",
-    "@ethereum-attestation-service/eas-sdk": "^1.4.2",
-    "@lens-protocol/client": "^2.0.0-alpha.30",
-    "@openzeppelin/contracts": "^4.8.1",
-    "@types/node": "^20.11.19",
-    "@typescript-eslint/eslint-plugin": "^7.0.1",
-    "@typescript-eslint/parser": "^7.0.1",
-    "eslint": "^8.56.0",
-    "ethers": "^6.11.1",
-    "hardhat": "^2.19.5",
-    "lens-modules": "^1.0.3",
-    "prettier": "^3.2.5",
-    "prettier-plugin-solidity": "^1.3.1",
-    "typescript": "^5.3.3"
-  }
+  "repository": "https://github.com/iPaulPro/SmartPolls",
+  "license": "MIT"
 }

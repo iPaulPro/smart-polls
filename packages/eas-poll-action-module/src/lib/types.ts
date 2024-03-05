@@ -49,7 +49,9 @@ export type EasVote = {
    * The index of the voted option.
    */
   optionIndex: PollOption;
+};
 
+export type SignedEasVote = EasVote & {
   /**
    * The profile ID of the voter (as a hex string).
    */
@@ -71,14 +73,22 @@ export type EasVote = {
   timestamp?: number;
 };
 
-export type GetVoteCountQueryVariables = {
+export const isSignedVote = (vote: EasVote): vote is SignedEasVote =>
+  "actorProfileId" in vote && "actorProfileOwner" in vote;
+
+export type GetVoteCountVariables = {
   schemaId: string;
   pollId: string;
 };
 
-export interface GetVoteCountForOptionIndexVariables extends GetVoteCountQueryVariables {
+export interface GetVoteCountForOptionIndexVariables extends GetVoteCountVariables {
   optionIndex: string;
 }
+
+export type GetVoteForActorVariables = {
+  schemaId: string;
+  data: string;
+};
 
 export interface GetVoteCountResponse {
   groupByAttestation: {
@@ -87,3 +97,20 @@ export interface GetVoteCountResponse {
     };
   }[];
 }
+
+export type AttestationData = {
+  publicationProfileId: string;
+  publicationId: string;
+  actorProfileId: string;
+  actorProfileOwner: `0x${string}`;
+  transactionExecutor: `0x${string}`;
+  optionIndex: number;
+  timestamp: number;
+};
+
+export type VoteAttestation = {
+  attester: string;
+  id: string;
+  revoked: boolean;
+  data: AttestationData;
+};
