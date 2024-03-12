@@ -13,7 +13,7 @@
   "devDependencies": {
     "@ethereum-attestation-service/eas-contracts": "^1.3.7",
     "@ethereum-attestation-service/eas-sdk": "^1.4.2",
-    "@openzeppelin/contracts": "^4.8.1",
+    "@openzeppelin/contracts": "^5.0.2",
     "hardhat": "^2.19.5",
     "lens-modules": "^1.0.3",
     "prettier": "^3.2.5",

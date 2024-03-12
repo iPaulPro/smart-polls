@@ -239,6 +239,12 @@ export const getVoteCountForOption = async (
   return data.groupByAttestation[0]._count._all;
 };
 
+interface AttestationsResult {
+  data: {
+    attestations: Attestation[];
+  };
+}
+
 interface Attestation {
   attester: string;
   id: string;
@@ -249,7 +255,7 @@ interface Attestation {
 export const getVoteForActor = async (
   variables: GetVoteForActorVariables,
   testnet: boolean = false,
-): Promise<VoteAttestation> => {
+): Promise<VoteAttestation | null> => {
   const response = await fetch(testnet ? EAS_GRAPHQL_ENDPOINT_TESTNET : EAS_GRAPHQL_ENDPOINT, {
     method: "POST",
     headers: {
@@ -265,9 +271,11 @@ export const getVoteForActor = async (
     throw new Error(`HTTP error: ${response.statusText}`);
   }
 
-  const { data } = await response.json();
-
-  const attestations = data.attestations as Attestation[];
+  const { data } = (await response.json()) as AttestationsResult;
+  const attestations = data.attestations;
+  if (attestations.length === 0) {
+    return null;
+  }
 
   const moduleData = decodeData(EAS_VOTE_ABI, attestations[0].data);
   const attestationData = {
